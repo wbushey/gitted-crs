@@ -4,11 +4,12 @@ import subprocess
 import urllib
 import urllib2
 import json
-import datetime
+import datetime as dt
+from sh import git
 
 # Fetches CRS PDFs from sources and commits them to the repo
 
-crs_reports_dir = 'crs-reports/'
+crs_reports_dir = 'crs-reports'
 open_crs_url = 'https://opencrs.com/api/reports/list.json' 
 GIT_USER_NAME = "Bill Bushey"
 GIT_USER_EMAIL = "wbushey@gmail.com"
@@ -27,12 +28,15 @@ def openCrsFetcher(page_limit=float("infinity")):
     while page < page_limit:
         page += 1
         args = urllib.urlencode({'key':open_crs_key,'page':page})
-        response = urllib2.urlopen(open_crs_url, args)
-        content = respond.read()
+        import pprint
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(args)
+        response = urllib2.urlopen('%s?%s' % (open_crs_url, args))
+        content = response.read()
         fetched_reports = decoder.decode(content)
-        break if not reports
+        if not fetched_reports: break
         for fetched_report in fetched_reports:
-            rd = datetime.strftime(fetched_report['releasedate'], '%Y-%m-%d')
+            rd = dt.datetime.strptime(fetched_report['releasedate'], '%Y-%m-%d')
             if rd in reports:
                 reports[rd].append(fetched_report)
             else:
@@ -42,7 +46,8 @@ def openCrsFetcher(page_limit=float("infinity")):
     #   1.) Download the PDF from the provided URL
     #   2.) saveInGit()
     for report_date in sorted(reports):
-        for report in reports(report_date):
+        for report in reports[report_date]:
+            print "Getting %s" % report['ordercode']
             response = urllib2.urlopen(report['download_url'])
             file_content = response.read()
             file_name = '%s.pdf' % report['ordercode']
@@ -59,9 +64,9 @@ def saveInGit(file_content, file_name, report_date):
         # TODO Check that this specific version of this file isn't already
         # in the comment history
         pass
-    with f = open(file_path, 'w'):    
-    f.write(file_content)
-    f.close()
+    with open(file_path, 'w') as f:    
+        f.write(file_content)
+        f.close()
     gitAdd(file_name, crs_reports_dir)
     if existed:
         # TODO Set the commit date to be the CRS release date
@@ -83,20 +88,14 @@ def gitAdd(filename, repo_dir):
     """                                                                         
         Adds the provided filename to the git stage,
     """
-    cmd = ['git',
-            '-c', 'user.name=\'' + GIT_USER_NAME + '\'',
-            '-c', 'user.email=\'' + GIT_USER_EMAIL + '\'',
-            'add', filename]
-    subprocess.check_call(cmd, cwd=REPO_DIR)
+    file_path = "%s/%s" % (repo_dir, filename)
+    git("add", file_path)
 
 def gitCommit(filename, repo_dir, message, date=None):
     """                                                                         
         Commits whatever is currently staged
     """
-    cmd = ['git',
-            '-c', 'user.name=\'' + GIT_USER_NAME + '\'',
-            '-c', 'user.email=\'' + GIT_USER_EMAIL + '\'',
-            'commit', '-m', message]
+    args = ['commit', '-m', message]
     if date:
-        cmd.append('--date="%s"' % date.strftime("%m/%d/%Y"))
-    subprocess.check_call(cmd, cwd=REPO_DIR)
+        args.append('--date="%s"' % date.strftime("%m/%d/%Y"))
+    git (args)
