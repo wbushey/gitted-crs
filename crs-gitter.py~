@@ -1,6 +1,5 @@
 # coding=utf-8
 import os
-import subprocess
 import urllib
 import urllib2
 import json
@@ -10,10 +9,8 @@ import datetime
 
 crs_reports_dir = 'crs-reports/'
 open_crs_url = 'https://opencrs.com/api/reports/list.json' 
-GIT_USER_NAME = "Bill Bushey"
-GIT_USER_EMAIL = "wbushey@gmail.com"
 
-def openCrsFetcher(page_limit=float("infinity")):
+def openCrsFetcher():
     """
         Fetches CRS PDFs from Open CRS.
     """
@@ -24,7 +21,7 @@ def openCrsFetcher(page_limit=float("infinity")):
     decoder = json.JSONDecoder()
     page = 0
     reports = dict()
-    while page < page_limit:
+    while True:
         page += 1
         args = urllib.urlencode({'key':open_crs_key,'page':page})
         response = urllib2.urlopen(open_crs_url, args)
@@ -41,14 +38,14 @@ def openCrsFetcher(page_limit=float("infinity")):
     # 4.) Starting with oldest, in ascending order:
     #   1.) Download the PDF from the provided URL
     #   2.) saveInGit()
-    for report_date in sorted(reports):
-        for report in reports(report_date):
+    for report_list in sorted(reports):
+        for report in report_list:
             response = urllib2.urlopen(report['download_url'])
             file_content = response.read()
             file_name = '%s.pdf' % report['ordercode']
-            saveInGit(file_content, file_name, report_date)
+            saveInGit(file_content, file_name)
         
-def saveInGit(file_content, file_name, report_date):
+def saveInGit(file_content, file_name):
     """
         Saves the provided file at the provided file name, then commits the
         save to the repo.
@@ -62,13 +59,8 @@ def saveInGit(file_content, file_name, report_date):
     with f = open(file_path, 'w'):    
     f.write(file_content)
     f.close()
-    gitAdd(file_name, crs_reports_dir)
     if existed:
-        # TODO Set the commit date to be the CRS release date
-        gitCommit(file_name, crs_reports_dir, '%s was updated' % file_name,
-                    report_date)
-    else:
-        gitCommit(file_name, crs_reports_dir, 'Added %s' % file_name)
+        
         
         
         
@@ -79,24 +71,3 @@ def saveInGit(file_content, file_name, report_date):
     #   1.) Create and save a new file
     #   2.) Commit the new file
 
-def gitAdd(filename, repo_dir):
-    """                                                                         
-        Adds the provided filename to the git stage,
-    """
-    cmd = ['git',
-            '-c', 'user.name=\'' + GIT_USER_NAME + '\'',
-            '-c', 'user.email=\'' + GIT_USER_EMAIL + '\'',
-            'add', filename]
-    subprocess.check_call(cmd, cwd=REPO_DIR)
-
-def gitCommit(filename, repo_dir, message, date=None):
-    """                                                                         
-        Commits whatever is currently staged
-    """
-    cmd = ['git',
-            '-c', 'user.name=\'' + GIT_USER_NAME + '\'',
-            '-c', 'user.email=\'' + GIT_USER_EMAIL + '\'',
-            'commit', '-m', message]
-    if date:
-        cmd.append('--date="%s"' % date.strftime("%m/%d/%Y"))
-    subprocess.check_call(cmd, cwd=REPO_DIR)
