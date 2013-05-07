@@ -60,7 +60,7 @@ def saveInGit(file_content, file_name, report_date):
         Saves the provided file at the provided file name, then commits the
         save to the repo.
     """
-    file_path = "/".join(crs_reports_dir,file_name)
+    file_path = "/".join([crs_reports_dir,file_name])
     existed = os.path.isfile(file_path) 
     if existed:
         # TODO Check that this specific version of this file isn't already
