@@ -9,7 +9,7 @@ from sh import git
 
 # Fetches CRS PDFs from sources and commits them to the repo
 
-crs_reports_dir = 'crs-reports'
+crs_reports_dir = './crs-reports'
 open_crs_url = 'https://opencrs.com/api/reports/list.json' 
 GIT_USER_NAME = "Bill Bushey"
 GIT_USER_EMAIL = "wbushey@gmail.com"
@@ -58,7 +58,7 @@ def saveInGit(file_content, file_name, report_date):
         Saves the provided file at the provided file name, then commits the
         save to the repo.
     """
-    file_path = crs_reports_dir + file_name
+    file_path = "/".join(crs_reports_dir,file_name)
     existed = os.path.isfile(file_path) 
     if existed:
         # TODO Check that this specific version of this file isn't already
@@ -97,5 +97,5 @@ def gitCommit(filename, repo_dir, message, date=None):
     """
     args = ['commit', '-m', message]
     if date:
-        args.append('--date="%s"' % date.strftime("%m/%d/%Y"))
+        args.append('--date="%s"' % date.strftime("%m-%d-%Y "))
     git (args)
