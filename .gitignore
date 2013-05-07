@@ -1,6 +1,7 @@
 syntax: glob
 *pyc
 *~
+*.py.swp
 *egg-info
 dist
 *orig

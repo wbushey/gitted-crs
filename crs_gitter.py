@@ -11,8 +11,10 @@ from sh import git
 
 crs_reports_dir = './crs-reports'
 open_crs_url = 'https://opencrs.com/api/reports/list.json' 
-GIT_USER_NAME = "Bill Bushey"
-GIT_USER_EMAIL = "wbushey@gmail.com"
+os.environ['GIT_AUTHOR_NAME'] = "Congressional Research Service"
+# One day we should put an email for CRS here
+os.environ['GIT_COMMITTER_NAME'] = "Bill Bushey"
+os.environ['GIT_COMMITTER_EMAIL']= "wbushey@gmail.com"
 
 def openCrsFetcher(page_limit=float("infinity")):
     """
@@ -73,7 +75,8 @@ def saveInGit(file_content, file_name, report_date):
         gitCommit(file_name, crs_reports_dir, '%s was updated' % file_name,
                     report_date)
     else:
-        gitCommit(file_name, crs_reports_dir, 'Added %s' % file_name)
+        gitCommit(file_name, crs_reports_dir, 'Added %s' % file_name,
+                    report_date)
         
         
         
@@ -97,5 +100,5 @@ def gitCommit(filename, repo_dir, message, date=None):
     """
     args = ['commit', '-m', message]
     if date:
-        args.append('--date="%s"' % date.strftime("%m-%d-%Y "))
+        args.append('--date="%s"' % date.strftime("%Y-%m-%d 00:00:00"))
     git (args)
