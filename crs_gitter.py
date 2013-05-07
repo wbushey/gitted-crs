@@ -102,3 +102,6 @@ def gitCommit(filename, repo_dir, message, date=None):
     if date:
         args.append('--date="%s"' % date.strftime("%Y-%m-%d 00:00:00"))
     git (args)
+
+if __name__ == '__main__':
+    openCrsFetcher()
